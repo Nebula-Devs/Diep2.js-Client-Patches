@@ -1087,7 +1087,7 @@ var app =
 					ctx.lineWidth = 2;
 					var dash = '',
 					    txt = (window.mods.leaderboardNames && window.mods.leaderboardNames[_i3] || strDecodeUTF16(entry.name)),
-					    lab = txt === '' ? (window.mods.leaderboardLabels && window.mods.leaderboardLabels[_i3] || entry.label) : ' - ' + (window.mods.leaderboardLabels[_i3] || entry.label);
+					    lab = txt === '' ? (window.mods.leaderboardLabels && window.mods.leaderboardLabels[_i3] || entry.label) : ' - ' + (window.mods.leaderboardLabels && window.mods.leaderboardLabels[_i3] || entry.label);
 					drawText(txt + lab + ': ' + handleLargeNumber(Math.round(leaderboardScore[_i3++])), Math.round(_x16 + _len4 / 2) + 0.5, Math.round(_y5 + _height4 - 5) + 0.5, _height4 - 5, color.guiwhite);
 
 					var picture = getEntityImageFromMockup(entry.index, entry.color),
