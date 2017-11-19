@@ -14,6 +14,8 @@ Mods:
     	expBar (0 to 1)
     	level
 */
+window.mods = {};
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -904,7 +906,7 @@ var app =
 			// Draw GUI
 			var alcoveSize = 200 / Math.max(global.screenWidth, global.screenHeight * 16 / 9);
 			var spacing = 20;
-			var max = leaderboard[0] == null ? 1 : (window.mods.leaderboardScores[0] || leaderboard[0].score);
+			var max = leaderboard[0] == null ? 1 : (window.mods.leaderboardScores && window.mods.leaderboardScores[0] || leaderboard[0].score);
 
 			{
 				// Draw messages
@@ -1075,17 +1077,17 @@ var app =
 				drawText('Leaderboard:', Math.round(_x16 + _len4 / 2) + 0.5, Math.round(_y5 - 6) + 0.5, _height4 + 4, color.guiwhite);
 				var _i3 = 0;
 				leaderboard.forEach(function (entry) {
-					leaderboardScore[_i3] += ((window.mods.leaderboardScores[_i3] || entry.score) - leaderboardScore[_i3]) / 20;
+					leaderboardScore[_i3] += ((window.mods.leaderboardScores && window.mods.leaderboardScores[_i3] || entry.score) - leaderboardScore[_i3]) / 20;
 					drawBar(_x16, _x16 + _len4, _y5 + _height4 / 2, _height4, color.black);
 					drawBar(_x16, _x16 + _len4, _y5 + _height4 / 2, _height4 - 3, color.grey);
-					var shift = Math.min(1, (window.mods.leaderboardScores[_i3] || entry.score) / max);
+					var shift = Math.min(1, (window.mods.leaderboardScores && window.mods.leaderboardScores[_i3] || entry.score) / max);
 					drawBar(_x16, _x16 + _len4 * shift, _y5 + _height4 / 2, _height4 - 3.5, color.green);
 					// Leadboard name + score
 					ctx.textAlign = 'center';
 					ctx.lineWidth = 2;
 					var dash = '',
-					    txt = (window.mods.leaderboardNames[_i3] || strDecodeUTF16(entry.name)),
-					    lab = txt === '' ? (window.mods.leaderboardLabels[_i3] || entry.label) : ' - ' + (window.mods.leaderboardLabels[_i3] || entry.label);
+					    txt = (window.mods.leaderboardNames && window.mods.leaderboardNames[_i3] || strDecodeUTF16(entry.name)),
+					    lab = txt === '' ? (window.mods.leaderboardLabels && window.mods.leaderboardLabels[_i3] || entry.label) : ' - ' + (window.mods.leaderboardLabels[_i3] || entry.label);
 					drawText(txt + lab + ': ' + handleLargeNumber(Math.round(leaderboardScore[_i3++])), Math.round(_x16 + _len4 / 2) + 0.5, Math.round(_y5 + _height4 - 5) + 0.5, _height4 - 5, color.guiwhite);
 
 					var picture = getEntityImageFromMockup(entry.index, entry.color),
