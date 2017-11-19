@@ -441,10 +441,14 @@ var app =
 			function checkRestart(e){
 		 		if ((e.which || e.keyCode) === global.KEY_ENTER){
 			 		window.removeEventListener("keydown", checkRestart);
+					window.restarting = false;
 			 		restartGame();
 		 		}
 	 		}
-	 		window.addEventListener("keydown", checkRestart);
+	 		if (!window.restarting) {
+				window.restarting = true;
+				window.addEventListener("keydown", checkRestart);
+			}
 		});
 		socket.on('message', function (message) {
 			// Death
