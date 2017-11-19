@@ -1,21 +1,7 @@
 /*
 Mods:
-  1. Press Enter to Respawn.
-  2. Various editable things:
-    window.mods:
-	    score (number)
-	    updateFrequency (number)
-	    latency (number)
-	    clientFPS (number)
-    	serverSpeed (number)
-    	leaderboardScores (Array of numbers of length 10)
-    	leaderboardNames (Array of strings of length 10)
-    	leaderboardLabels (Array of strings of length 10)
-    	expBar (0 to 1)
-    	level
+  1. Press Enter to respawn.
 */
-window.mods = {};
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -838,9 +824,12 @@ var app =
 			};
 
 			extrapolateMotion = function extrapolateMotion(v1, v2, t) {
-				var wubt = t <= 1000 ? t : 10 * Math.log(1 + (t - 1000) / 10) + 1000,
-				    tt = 30 * wubt / 1000;
-				return (v2 + wubt / metrics.rendergap * (v2 - v1)) * tt;
+				var wubt = t,
+
+				// (t <= 1000) ? t : 10 * Math.log(1 + (t - 1000) / 10) + 1000,
+				tt = 30 * wubt / 1000,
+				    drop = Math.min(1, Math.max(0, 1.5 - t / 1000));
+				return (v2 + wubt / metrics.rendergap * (v2 - v1)) * tt * drop;
 			};
 
 			var t = gui.fps * (global.time - player.time - Math.max(metrics.rendergap, 50));
@@ -906,7 +895,7 @@ var app =
 			// Draw GUI
 			var alcoveSize = 200 / Math.max(global.screenWidth, global.screenHeight * 16 / 9);
 			var spacing = 20;
-			var max = leaderboard[0] == null ? 1 : (window.mods.leaderboardScores && window.mods.leaderboardScores[0] || leaderboard[0].score);
+			var max = leaderboard[0] == null ? 1 : leaderboard[0].score;
 
 			{
 				// Draw messages
@@ -962,39 +951,45 @@ var app =
 				gui.skills.typeData.forEach(function (skill) {
 					// Individual skill bars
 					ticker--;
-					if (skill.cap) {
+					var name = skill[0],
+					    level = skill[1],
+					    col = skill[2],
+					    value = skill[3],
+					    cap = skill[4],
+					    maxLevel = skill[5] + 1;
+					if (cap) {
 						_len = save;
-						var extension = skill.cap > skill.maxLevel;
-						var blocking = skill.cap < skill.maxLevel;
-						var _max = skill.maxLevel;
+						var extension = cap > maxLevel;
+						var blocking = cap < maxLevel;
+						var _max = maxLevel;
 						if (extension) {
-							_len = _len * skill.cap / skill.maxLevel;
-							_max = skill.cap;
+							_len = _len * cap / maxLevel;
+							_max = cap;
 						}
 						drawBar(_x13 + _height / 2, _x13 - _height / 2 + _len, _y2 + _height / 2, _height, color.black);
-						drawBar(_x13 + _height / 2, _x13 + _height / 2 + (_len - _height) * (skill.cap / _max), _y2 + _height / 2, _height - 3, color.grey);
-						drawBar(_x13 + _height / 2, _x13 + _height / 2 + (_len - _height) * (skill.level / _max), _y2 + _height / 2, _height - 3.5, getColor(skill.color));
+						drawBar(_x13 + _height / 2, _x13 + _height / 2 + (_len - _height) * (cap / _max), _y2 + _height / 2, _height - 3, color.grey);
+						drawBar(_x13 + _height / 2, _x13 + _height / 2 + (_len - _height) * (level / _max), _y2 + _height / 2, _height - 3.5, getColor(col));
 						if (blocking) {
 							// Blocked-off area
 							ctx.lineWidth = 1;
 							ctx.strokeStyle = color.grey;
-							for (var j = skill.cap + 1; j < _max; j++) {
+							for (var j = cap + 1; j < _max; j++) {
 								drawGuiLine(_x13 + (_len - _height) * j / _max, _y2 + 1.5, _x13 + (_len - _height) * j / _max, _y2 - 3 + _height);
 							}
 						}
 						ctx.strokeStyle = color.black; // Vertical dividers
 						ctx.lineWidth = 1;
-						for (var _j = 1; _j < skill.level + 1; _j++) {
+						for (var _j = 1; _j < level + 1; _j++) {
 							drawGuiLine(_x13 + (_len - _height) * _j / _max, _y2 + 1.5, _x13 + (_len - _height) * _j / _max, _y2 - 3 + _height);
 						}
 						ctx.textAlign = 'center'; // Skill name
 						ctx.lineWidth = 2;
-						var textcolor = skill.level == _max ? getColor(skill.color) : !gui.skills.points || skill.cap !== skill.maxLevel && skill.level == skill.cap ? color.grey : color.guiwhite;
-						drawText(skill.name, Math.round(_x13 + _len / 2) + 0.5, Math.round(_y2 + _height - 5) + 0.5, _height - 5, textcolor);
+						var textcolor = level == _max ? getColor(col) : !gui.skills.points || cap !== maxLevel - 1 && level == cap ? color.grey : color.guiwhite;
+						drawText(name, Math.round(_x13 + _len / 2) + 0.5, Math.round(_y2 + _height - 5) + 0.5, _height - 5, textcolor);
 						ctx.textAlign = 'right'; // Skill key
 						drawText('[' + ticker % 10 + ']', Math.round(_x13 + _len - _height * 0.25) - 0.5, Math.round(_y2 + _height - 6) + 0.5, _height - 5, textcolor);
 						ctx.textAlign = 'left'; // Skill value
-						drawText(skill.value, Math.round(_x13 + _len + 4) + 0.5, Math.round(_y2 + _height - 5) + 0.5, _height - 3, getColor(skill.color));
+						drawText(value, Math.round(_x13 + _len + 4) + 0.5, Math.round(_y2 + _height - 5) + 0.5, _height - 3, getColor(col));
 
 						_y2 -= _height + _vspacing;
 					}
@@ -1018,19 +1013,19 @@ var app =
 				ctx.lineWidth = 1;
 				drawBar(_x14, _x14 + _len2, _y3 + _height2 / 2, _height2, color.black);
 				drawBar(_x14, _x14 + _len2, _y3 + _height2 / 2, _height2 - 3, color.grey);
-				drawBar(_x14, _x14 + _len2 * (window.mods.expBar || gui.progress), _y3 + _height2 / 2, _height2 - 3.5, color.gold);
+				drawBar(_x14, _x14 + _len2 * gui.progress, _y3 + _height2 / 2, _height2 - 3.5, color.gold);
 				ctx.lineWidth = 2;
 				ctx.textAlign = 'center';
-				drawText('Level ' + (window.mods.level || gui.level) + ' ' + gui.type, Math.round(_x14 + _len2 / 2) + 0.5, Math.round(_y3 + _height2 - 6) + 0.5, _height2 - 4, color.guiwhite);
+				drawText('Level ' + gui.level + ' ' + gui.type, Math.round(_x14 + _len2 / 2) + 0.5, Math.round(_y3 + _height2 - 6) + 0.5, _height2 - 4, color.guiwhite);
 				_height2 = 14;
 				_y3 -= _height2 + _vspacing2;
 				drawBar(_x14, _x14 + _len2, _y3 + _height2 / 2, _height2, color.black);
 				drawBar(_x14, _x14 + _len2, _y3 + _height2 / 2, _height2 - 3, color.grey);
-				var scoreFactor = max ? Math.min(1, (window.mods.score || gui.score) / max) : 1;
+				var scoreFactor = max ? Math.min(1, gui.score / max) : 1;
 				drawBar(_x14, _x14 + _len2 * scoreFactor, _y3 + _height2 / 2, _height2 - 3.5, color.green);
 				ctx.lineWidth = 2;
 				ctx.textAlign = 'center';
-				drawText('Score: ' + handleLargeNumber(window.mods.score || gui.score), Math.round(_x14 + _len2 / 2) + 0.5, Math.round(_y3 + _height2 - 4) + 0.5, _height2 - 2, color.guiwhite);
+				drawText('Score: ' + handleLargeNumber(gui.score), Math.round(_x14 + _len2 / 2) + 0.5, Math.round(_y3 + _height2 - 4) + 0.5, _height2 - 2, color.guiwhite);
 				ctx.lineWidth = 4;
 				drawText(strDecodeUTF16(player.name), Math.round(_x14 + _len2 / 2) + 0.5, Math.round(_y3 - 10 - _vspacing2) + 0.5, 32, color.guiwhite);
 			}
@@ -1059,10 +1054,10 @@ var app =
 				drawGuiRect(_x15, _y4, _len3, _height3, true); // Border
 
 				ctx.textAlign = 'right';
-				drawText('Update Rate: ' + (window.mods.updateFrequency || metrics.updatetime) + 'Hz', _x15 + _len3, _y4 - 52, 10, color.guiwhite);
-				drawText('Latency: ' + (window.mods.latency || metrics.latency) + 'ms', _x15 + _len3, _y4 - 38, 10, color.guiwhite);
-				drawText('Client FPS: ' + (window.mods.clientFPS || metrics.rendertime), _x15 + _len3, _y4 - 24, 10, color.guiwhite);
-				drawText('Server Speed: ' + (window.mods.serverSpeed || (100 * gui.fps).toFixed(2) + '%'), _x15 + _len3, _y4 - 10, 10, color.guiwhite);
+				drawText('Update Rate: ' + metrics.updatetime + 'Hz', _x15 + _len3, _y4 - 52, 10, color.guiwhite);
+				drawText('Latency: ' + metrics.latency + 'ms', _x15 + _len3, _y4 - 38, 10, color.guiwhite);
+				drawText('Client FPS: ' + metrics.rendertime, _x15 + _len3, _y4 - 24, 10, color.guiwhite);
+				drawText('Server Speed: ' + (100 * gui.fps).toFixed(2) + '%', _x15 + _len3, _y4 - 10, 10, color.guiwhite);
 			}
 
 			{
@@ -1077,17 +1072,17 @@ var app =
 				drawText('Leaderboard:', Math.round(_x16 + _len4 / 2) + 0.5, Math.round(_y5 - 6) + 0.5, _height4 + 4, color.guiwhite);
 				var _i3 = 0;
 				leaderboard.forEach(function (entry) {
-					leaderboardScore[_i3] += ((window.mods.leaderboardScores && window.mods.leaderboardScores[_i3] || entry.score) - leaderboardScore[_i3]) / 20;
+					leaderboardScore[_i3] += (entry.score - leaderboardScore[_i3]) / 20;
 					drawBar(_x16, _x16 + _len4, _y5 + _height4 / 2, _height4, color.black);
 					drawBar(_x16, _x16 + _len4, _y5 + _height4 / 2, _height4 - 3, color.grey);
-					var shift = Math.min(1, (window.mods.leaderboardScores && window.mods.leaderboardScores[_i3] || entry.score) / max);
+					var shift = Math.min(1, entry.score / max);
 					drawBar(_x16, _x16 + _len4 * shift, _y5 + _height4 / 2, _height4 - 3.5, color.green);
 					// Leadboard name + score
 					ctx.textAlign = 'center';
 					ctx.lineWidth = 2;
 					var dash = '',
-					    txt = (window.mods.leaderboardNames && window.mods.leaderboardNames[_i3] || strDecodeUTF16(entry.name)),
-					    lab = txt === '' ? (window.mods.leaderboardLabels && window.mods.leaderboardLabels[_i3] || entry.label) : ' - ' + (window.mods.leaderboardLabels && window.mods.leaderboardLabels[_i3] || entry.label);
+					    txt = strDecodeUTF16(entry.name),
+					    lab = txt === '' ? entry.label : ' - ' + entry.label;
 					drawText(txt + lab + ': ' + handleLargeNumber(Math.round(leaderboardScore[_i3++])), Math.round(_x16 + _len4 / 2) + 0.5, Math.round(_y5 + _height4 - 5) + 0.5, _height4 - 5, color.guiwhite);
 
 					var picture = getEntityImageFromMockup(entry.index, entry.color),
@@ -1187,7 +1182,7 @@ var app =
 		ctx.textAlign = 'center';
 		ctx.lineWidth = 4;
 		drawText('You have died.', global.screenWidth / 2, global.screenHeight / 2 - 40, 16, color.guiwhite);
-		drawText('Final score: ' + (window.mods.score || gui.score), global.screenWidth / 2, global.screenHeight / 2, 48, color.guiwhite);
+		drawText('Final score: ' + gui.score, global.screenWidth / 2, global.screenHeight / 2, 48, color.guiwhite);
 		drawText('Press Enter to play again.', global.screenWidth / 2, global.screenHeight / 2 + 40, 16, color.guiwhite);
 	}
 
@@ -10131,12 +10126,16 @@ var app =
 			key: 'keyboardDown',
 			value: function keyboardDown(event) {
 				switch (event.keyCode) {
+					case global.KEY_UP_ARROW:
 					case global.KEY_UP:
 						this.parent.socket.emit('command', 'up', true);break;
+					case global.KEY_DOWN_ARROW:
 					case global.KEY_DOWN:
 						this.parent.socket.emit('command', 'down', true);break;
+					case global.KEY_LEFT_ARROW:
 					case global.KEY_LEFT:
 						this.parent.socket.emit('command', 'left', true);break;
+					case global.KEY_RIGHT_ARROW:
 					case global.KEY_RIGHT:
 						this.parent.socket.emit('command', 'right', true);break;
 					case global.KEY_LEVEL_UP:
@@ -10150,8 +10149,6 @@ var app =
 							this.parent.socket.emit('toggle', 'autofire');break;
 						case global.KEY_OVER_RIDE:
 							this.parent.socket.emit('toggle', 'override');break;
-						case global.KEY_AUTO_MOVE:
-							this.parent.socket.emit('toggle', 'autoguide');break;
 					}
 					if (global.canSkill) {
 						switch (event.keyCode) {
@@ -10203,12 +10200,16 @@ var app =
 			key: 'keyboardUp',
 			value: function keyboardUp(event) {
 				switch (event.keyCode) {
+					case global.KEY_UP_ARROW:
 					case global.KEY_UP:
 						this.parent.socket.emit('command', 'up', false);break;
+					case global.KEY_DOWN_ARROW:
 					case global.KEY_DOWN:
 						this.parent.socket.emit('command', 'down', false);break;
+					case global.KEY_LEFT_ARROW:
 					case global.KEY_LEFT:
 						this.parent.socket.emit('command', 'left', false);break;
+					case global.KEY_RIGHT_ARROW:
 					case global.KEY_RIGHT:
 						this.parent.socket.emit('command', 'right', false);break;
 				}
@@ -10270,9 +10271,12 @@ var app =
 		KEY_UP: 87,
 		KEY_RIGHT: 68,
 		KEY_DOWN: 83,
+		KEY_LEFT_ARROW: 37,
+		KEY_UP_ARROW: 38,
+		KEY_RIGHT_ARROW: 39,
+		KEY_DOWN_ARROW: 40,
 		KEY_AUTO_SPIN: 67,
-		KEY_AUTO_MOVE: 69,
-		KEY_AUTO_FIRE: 70,
+		KEY_AUTO_FIRE: 69,
 		KEY_OVER_RIDE: 82,
 		KEY_UPGRADE_ATK: 49,
 		KEY_UPGRADE_HTL: 50,
